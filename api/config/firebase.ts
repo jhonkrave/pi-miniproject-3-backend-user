@@ -22,7 +22,7 @@ const initializeFirebase = (): void => {
       const keyPath = path.isAbsolute(process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH)
         ? process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH
         : path.resolve(process.cwd(), process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH);
-      
+
       const serviceAccount = require(keyPath);
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount)

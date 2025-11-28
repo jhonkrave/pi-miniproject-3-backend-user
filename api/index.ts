@@ -3,6 +3,7 @@ import cors from 'cors';
 import type { CorsOptions } from 'cors';
 import * as dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes';
+import meetingRoutes from './routes/meetingRoutes';
 
 import './config/firebase'; // Initialize Firebase
 
@@ -13,6 +14,8 @@ const app: Application = express();
 // Middleware
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+import cookieParser from 'cookie-parser';
+app.use(cookieParser());
 
 /**
  * CORS configuration based on environment variables
@@ -65,6 +68,7 @@ app.get('/health', (_req, res) => { res.json({ status: 'ok' }); });
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/meetings', meetingRoutes);
 
 /**
  * Server initialization
@@ -72,23 +76,23 @@ app.use('/api/auth', authRoutes);
  * @description Does not start server if file is imported as module
  */
 if (require.main === module) {
-    /**
-     * Server port
-     * @description Port obtained from PORT environment variable or 3000 as default
-     * @type {number}
-     */
-    const PORT = Number(process.env.PORT || 3000);
-    
-    /**
-     * Starts HTTP server
-     * @description Listens on specified port and shows confirmation message
-     * @param {number} PORT - Port to listen on
-     * @param {Function} callback - Callback function executed when server starts
-     */
-    app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-    });
-  }
+  /**
+   * Server port
+   * @description Port obtained from PORT environment variable or 3000 as default
+   * @type {number}
+   */
+  const PORT = Number(process.env.PORT || 3000);
+
+  /**
+   * Starts HTTP server
+   * @description Listens on specified port and shows confirmation message
+   * @param {number} PORT - Port to listen on
+   * @param {Function} callback - Callback function executed when server starts
+   */
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
+  });
+}
 
 
 

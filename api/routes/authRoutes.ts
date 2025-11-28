@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticate } from '../middleware/auth';
 import userDao from '../dao/UserDao';
+import { auth } from '../config/firebase';
 
 const router = Router();
 
@@ -175,6 +176,61 @@ router.delete('/:uid', authenticate, async (req: Request, res: Response): Promis
       });
     }
   }
+});
+
+/**
+ * @route   POST /api/auth/session
+ * @desc    Create a session cookie from ID token
+ * @access  Public
+ */
+router.post('/session', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      res.status(400).json({
+        success: false,
+        message: 'ID token is required',
+      });
+      return;
+    }
+
+    // Set session expiration to 5 days
+    const expiresIn = 60 * 60 * 24 * 5 * 1000;
+
+    // Create the session cookie
+    const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn });
+
+    // Set cookie policy for session cookie
+    const options = { maxAge: expiresIn, httpOnly: true, secure: process.env.NODE_ENV === 'production' };
+
+    res.cookie('session', sessionCookie, options);
+
+    res.status(200).json({
+      success: true,
+      message: 'Session created successfully',
+    });
+  } catch (error: any) {
+    console.error('Error creating session cookie:', error);
+    res.status(401).json({
+      success: false,
+      message: 'Unauthorized',
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * @route   POST /api/auth/logout
+ * @desc    Clear session cookie
+ * @access  Public
+ */
+router.post('/logout', (_req: Request, res: Response): void => {
+  res.clearCookie('session');
+  res.status(200).json({
+    success: true,
+    message: 'Logged out successfully',
+  });
 });
 
 export default router;

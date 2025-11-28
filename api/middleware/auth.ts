@@ -11,30 +11,24 @@ export const authenticate = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    // Get token from Authorization header
+    // Get token from Authorization header or Session Cookie
     const authHeader = req.headers.authorization;
+    const sessionCookie = req.cookies?.session || '';
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    let decodedToken;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const idToken = authHeader.split('Bearer ')[1];
+      decodedToken = await auth.verifyIdToken(idToken);
+    } else if (sessionCookie) {
+      decodedToken = await auth.verifySessionCookie(sessionCookie, true);
+    } else {
       res.status(401).json({
         success: false,
-        message: 'Authorization token required. Format: Bearer <token>',
+        message: 'Authorization token or session cookie required',
       });
       return;
     }
-
-    // Extract token from "Bearer <token>"
-    const idToken = authHeader.split('Bearer ')[1];
-
-    if (!idToken) {
-      res.status(401).json({
-        success: false,
-        message: 'Invalid authorization header format',
-      });
-      return;
-    }
-
-    // Verify the token with Firebase Admin SDK
-    const decodedToken = await auth.verifyIdToken(idToken);
 
     // Attach user information to request object
     req.user = decodedToken;
@@ -84,7 +78,7 @@ export const authenticate = async (
  */
 export const optionalAuth = async (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
