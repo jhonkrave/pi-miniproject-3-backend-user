@@ -20,6 +20,20 @@ class MeetingDao extends GlobalDao<Meeting, MeetingCreate, MeetingUpdate> {
             createdBy: data.createdBy,
             createdAt: data.createdAt?.toDate() || new Date(),
             updatedAt: data.updatedAt?.toDate() || new Date(),
+            status: data.status || 'scheduled',
+            maxParticipants: data.maxParticipants || 10,
+        };
+    }
+
+    /**
+     * Prepare data for creation with defaults
+     */
+    protected prepareCreateData(data: MeetingCreate): any {
+        const baseData = super.prepareCreateData(data);
+        return {
+            ...baseData,
+            status: 'scheduled',
+            maxParticipants: data.maxParticipants || 10,
         };
     }
 

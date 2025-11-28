@@ -11,7 +11,7 @@ const router = Router();
  */
 router.post('/', authenticate, async (req: Request, res: Response): Promise<void> => {
     try {
-        const { title, description, startDateTime } = req.body;
+        const { title, description, startDateTime, maxParticipants } = req.body;
         const uid = req.uid;
 
         if (!title || !startDateTime) {
@@ -35,6 +35,7 @@ router.post('/', authenticate, async (req: Request, res: Response): Promise<void
             description,
             startDateTime: new Date(startDateTime),
             createdBy: uid,
+            maxParticipants: maxParticipants || 10,
         });
 
         res.status(201).json({
@@ -125,7 +126,7 @@ router.get('/:id', authenticate, async (req: Request, res: Response): Promise<vo
 router.put('/:id', authenticate, async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
-        const { title, description, startDateTime } = req.body;
+        const { title, description, startDateTime, status, maxParticipants } = req.body;
         const uid = req.uid;
 
         const existingMeeting = await meetingDao.findById(id);
@@ -149,6 +150,8 @@ router.put('/:id', authenticate, async (req: Request, res: Response): Promise<vo
         if (title) updateData.title = title;
         if (description !== undefined) updateData.description = description;
         if (startDateTime) updateData.startDateTime = new Date(startDateTime);
+        if (status) updateData.status = status;
+        if (maxParticipants) updateData.maxParticipants = maxParticipants;
 
         const updatedMeeting = await meetingDao.update(id, updateData);
 
