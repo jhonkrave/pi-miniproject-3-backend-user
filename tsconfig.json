@@ -11,7 +11,6 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "moduleResolution": "node",
-    "types": ["node", "express"],
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
