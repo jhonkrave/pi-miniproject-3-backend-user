@@ -17,18 +17,34 @@ const initializeFirebase = (): void => {
     }
 
 
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+      // Use environment variable containing the JSON object directly
+      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+      });
+      console.log('Firebase Admin SDK initialized using environment variable JSON');
+      return;
+    }
+
     if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH) {
 
       const keyPath = path.isAbsolute(process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH)
         ? process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH
         : path.resolve(process.cwd(), process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH);
-      
-      const serviceAccount = require(keyPath);
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-      });
-      console.log('Firebase Admin SDK initialized using service account key file');
-      return;
+
+      // Check if file exists before requiring
+      if (!require('fs').existsSync(keyPath)) {
+         console.warn(`Service account file not found at: ${keyPath}. Checking if running in cloud environment...`);
+         // In cloud environments like Render, we should prefer using env vars or skip if file missing
+      } else {
+          const serviceAccount = require(keyPath);
+          admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount)
+          });
+          console.log('Firebase Admin SDK initialized using service account key file');
+          return;
+      }
     }
 
     throw new Error(
