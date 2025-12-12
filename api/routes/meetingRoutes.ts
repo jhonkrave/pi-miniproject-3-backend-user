@@ -278,7 +278,7 @@ router.post('/:id/transcription', authenticate, upload.any(), async (req: Reques
         const uid = req.uid;
         
         // Handle file from either 'audio' or 'recording' or any single file upload
-        const files = req.files as Express.Multer.File[];
+        const files = req.files as Express.Multer.File[] | undefined;
         const file = files && files.length > 0 ? files[0] : undefined;
 
         if (!file) {
@@ -327,7 +327,7 @@ router.post('/:id/transcription', authenticate, upload.any(), async (req: Reques
 
     } catch (error: any) {
         // Cleanup uploaded file if exists (using req.files array now)
-        const files = req.files as Express.Multer.File[];
+        const files = req.files as Express.Multer.File[] | undefined;
         if (files && files.length > 0 && fs.existsSync(files[0].path)) {
             fs.unlinkSync(files[0].path);
         }
