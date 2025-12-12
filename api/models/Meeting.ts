@@ -11,13 +11,22 @@ export interface Meeting {
     updatedAt: Date;
     status: 'scheduled' | 'active' | 'ended' | 'cancelled';
     maxParticipants: number;
+    participants: string[];
+    transcription?: TranscriptionSegment[];
+}
+
+export interface TranscriptionSegment {
+    timestamp: string;
+    speaker: string;
+    text: string;
 }
 
 /**
  * Data transfer object for creating a new meeting
  */
-export type MeetingCreate = Omit<Meeting, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'maxParticipants'> & {
+export type MeetingCreate = Omit<Meeting, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'maxParticipants' | 'participants' | 'transcription'> & {
     maxParticipants?: number;
+    participants?: string[];
 };
 
 /**

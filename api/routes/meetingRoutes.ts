@@ -1,6 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { authenticate } from '../middleware/auth';
 import meetingDao from '../dao/MeetingDao';
+import { upload } from '../middleware/upload';
+import { transcribeAudio } from '../services/transcriptionService';
+import fs from 'fs';
 
 const router = Router();
 
@@ -208,6 +211,131 @@ router.delete('/:id', authenticate, async (req: Request, res: Response): Promise
         res.status(500).json({
             success: false,
             message: 'Failed to delete meeting',
+            error: error.message,
+        });
+    }
+});
+
+/**
+ * @route   GET /api/meetings/:id/transcription
+ * @desc    Get meeting transcription
+ * @access  Private (Participants only)
+ */
+router.get('/:id/transcription', authenticate, async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
+        const uid = req.uid;
+
+        const meeting = await meetingDao.findById(id);
+
+        if (!meeting) {
+            res.status(404).json({
+                success: false,
+                message: 'Meeting not found',
+            });
+            return;
+        }
+
+        // Check if user is participant
+        if (!meeting.participants || !meeting.participants.includes(uid!)) {
+            res.status(403).json({
+                success: false,
+                message: 'Not authorized to view transcription',
+            });
+            return;
+        }
+
+        if (!meeting.transcription) {
+            res.status(404).json({
+                success: false,
+                message: 'Transcription not found',
+            });
+            return;
+        }
+
+        res.status(200).json({
+            success: true,
+            data: meeting.transcription,
+        });
+    } catch (error: any) {
+        console.error('Error fetching transcription:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch transcription',
+            error: error.message,
+        });
+    }
+});
+
+/**
+ * @route   POST /api/meetings/:id/transcription
+ * @desc    Generate meeting transcription from audio
+ * @access  Private (Participants only)
+ */
+router.post('/:id/transcription', authenticate, upload.any(), async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
+        const uid = req.uid;
+        
+        // Handle file from either 'audio' or 'recording' or any single file upload
+        const files = req.files as Express.Multer.File[];
+        const file = files && files.length > 0 ? files[0] : undefined;
+
+        if (!file) {
+            res.status(400).json({
+                success: false,
+                message: 'Audio file is required (field name: audio or recording)',
+            });
+            return;
+        }
+
+        const meeting = await meetingDao.findById(id);
+
+        if (!meeting) {
+            fs.unlinkSync(file.path);
+            res.status(404).json({
+                success: false,
+                message: 'Meeting not found',
+            });
+            return;
+        }
+
+        // Check permission
+        if (!meeting.participants || !meeting.participants.includes(uid!)) {
+            fs.unlinkSync(file.path);
+            res.status(403).json({
+                success: false,
+                message: 'Not authorized to generate transcription',
+            });
+            return;
+        }
+
+        // Process audio
+        const transcription = await transcribeAudio(file.path, file.mimetype);
+
+        // Save to DB
+        await meetingDao.saveTranscription(id, transcription);
+
+        // Cleanup
+        fs.unlinkSync(file.path);
+
+        res.status(200).json({
+            success: true,
+            message: 'Transcription generated successfully',
+            data: transcription,
+        });
+
+    } catch (error: any) {
+        // Cleanup uploaded file if exists (using req.files array now)
+        const files = req.files as Express.Multer.File[];
+        if (files && files.length > 0 && fs.existsSync(files[0].path)) {
+            fs.unlinkSync(files[0].path);
+        }
+        
+        console.error('Error generating transcription:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to generate transcription',
             error: error.message,
         });
     }
