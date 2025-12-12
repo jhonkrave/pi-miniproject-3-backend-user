@@ -1,4 +1,4 @@
-import { Meeting, MeetingCreate, MeetingUpdate } from '../models/Meeting';
+import { Meeting, MeetingCreate, MeetingUpdate, TranscriptionSegment } from '../models/Meeting';
 import { GlobalDao } from './GlobalDao';
 
 /**
@@ -22,6 +22,8 @@ class MeetingDao extends GlobalDao<Meeting, MeetingCreate, MeetingUpdate> {
             updatedAt: data.updatedAt?.toDate() || new Date(),
             status: data.status || 'scheduled',
             maxParticipants: data.maxParticipants || 10,
+            participants: data.participants || [data.createdBy],
+            transcription: data.transcription,
         };
     }
 
@@ -34,6 +36,7 @@ class MeetingDao extends GlobalDao<Meeting, MeetingCreate, MeetingUpdate> {
             ...baseData,
             status: 'scheduled',
             maxParticipants: data.maxParticipants || 10,
+            participants: data.participants || [data.createdBy],
         };
     }
 
@@ -54,6 +57,21 @@ class MeetingDao extends GlobalDao<Meeting, MeetingCreate, MeetingUpdate> {
             return querySnapshot.docs.map((doc) => this.documentToEntity(doc.id, doc.data()));
         } catch (error: any) {
             console.error('Error finding meetings by creator:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Save transcription to meeting and close it
+     */
+    async saveTranscription(meetingId: string, transcription: TranscriptionSegment[]): Promise<void> {
+        try {
+            await this.update(meetingId, {
+                transcription,
+                status: 'ended'
+            });
+        } catch (error: any) {
+            console.error('Error saving transcription:', error);
             throw error;
         }
     }

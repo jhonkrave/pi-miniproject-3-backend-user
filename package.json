@@ -21,6 +21,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
@@ -31,12 +32,14 @@
     "express": "^4.18.2",
     "firebase": "^12.6.0",
     "firebase-admin": "^12.0.0",
+    "multer": "^2.0.2",
     "peer": "^1.0.2",
     "socket.io": "^4.8.1",
     "stun": "^2.1.0"
   },
   "devDependencies": {
     "@types/morgan": "^1.9.9",
+    "@types/multer": "^2.0.0",
     "@typescript-eslint/eslint-plugin": "^6.16.0",
     "@typescript-eslint/parser": "^6.16.0",
     "eslint": "^8.56.0",
