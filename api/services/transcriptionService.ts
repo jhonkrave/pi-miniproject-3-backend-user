@@ -36,12 +36,21 @@ export const transcribeAudio = async (filePath: string, mimeType: string): Promi
 
         // 3. Generate content
         // Using 'gemini-2.0-flash' as confirmed by user's available model list
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-2.0-flash",
+            generationConfig: {
+                temperature: 0.0, // Make output deterministic to reduce hallucinations
+            }
+        });
         
         const prompt = `
-            Transcribe this audio recording of a meeting.
-            Identify different speakers if possible (e.g., Speaker 1, Speaker 2).
-            Provide timestamps for each segment in "MM:SS" format.
+            Transcribe this audio recording of a meeting in Spanish (Español).
+            
+            Strictly follow these rules:
+            1. The language is SPANISH. If you hear silence, background noise, or unintelligible audio, DO NOT output repetitive words like "no no no", "you", or random subtitles. Just skip it.
+            2. Identify different speakers if possible (e.g., Speaker 1, Speaker 2).
+            3. Provide timestamps for each segment in "MM:SS" format.
+            4. If the audio is empty or just noise, return an empty array.
             
             Return ONLY a valid JSON array matching this structure exactly:
             [
